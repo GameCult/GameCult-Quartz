@@ -3,6 +3,8 @@ import remarkFrontmatter from "remark-frontmatter"
 import { QuartzTransformerPlugin } from "../types"
 import yaml from "js-yaml"
 import toml from "toml"
+import { Root as MdRoot } from "mdast"
+import { toString } from "mdast-util-to-string"
 import { FilePath, FullSlug, getFileExtension, slugifyFilePath, slugTag } from "../../util/path"
 import { QuartzPluginData } from "../vfile"
 import { i18n } from "../../i18n"
@@ -52,6 +54,23 @@ function getAliasSlugs(aliases: string[]): FullSlug[] {
   return res
 }
 
+function getFirstMarkdownHeading(root: MdRoot): string | undefined {
+  const firstMeaningfulNode = root.children.find((node) => {
+    if (node.type === "yaml") {
+      return false
+    }
+
+    return toString(node).trim().length > 0
+  })
+
+  if (!firstMeaningfulNode || firstMeaningfulNode.type !== "heading") {
+    return undefined
+  }
+
+  const text = toString(firstMeaningfulNode).trim()
+  return text.length > 0 ? text : undefined
+}
+
 export const FrontMatter: QuartzTransformerPlugin<Partial<Options>> = (userOpts) => {
   const opts = { ...defaultOptions, ...userOpts }
   return {
@@ -61,7 +80,7 @@ export const FrontMatter: QuartzTransformerPlugin<Partial<Options>> = (userOpts)
       return [
         [remarkFrontmatter, ["yaml", "toml"]],
         () => {
-          return (_, file) => {
+          return (tree: MdRoot, file) => {
             const fileData = Buffer.from(file.value as Uint8Array)
             const { data } = matter(fileData, {
               ...opts,
@@ -74,7 +93,10 @@ export const FrontMatter: QuartzTransformerPlugin<Partial<Options>> = (userOpts)
             if (data.title != null && data.title.toString() !== "") {
               data.title = data.title.toString()
             } else {
-              data.title = file.stem ?? i18n(cfg.configuration.locale).propertyDefaults.title
+              data.title =
+                getFirstMarkdownHeading(tree) ??
+                file.stem ??
+                i18n(cfg.configuration.locale).propertyDefaults.title
             }
 
             const tags = coerceToArray(coalesceAliases(data, ["tags", "tag"]))

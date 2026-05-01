@@ -28,23 +28,12 @@ function isElementNode(node: RootContent): node is Element {
   return node.type === "element"
 }
 
-function isMeaningfulNode(node: RootContent): boolean {
-  return normalizeWhitespace(toString(node)).length > 0
+function isHeadingElement(node: RootContent): node is Element {
+  return isElementNode(node) && /^h[1-6]$/.test(node.tagName)
 }
 
-function isDuplicateTitleHeading(node: RootContent, pageTitle?: string): boolean {
-  if (!isElementNode(node) || node.tagName !== "h1") {
-    return false
-  }
-
-  const headingText = normalizeWhitespace(toString(node))
-  const normalizedTitle = normalizeWhitespace(pageTitle ?? "")
-
-  if (headingText.length === 0) {
-    return false
-  }
-
-  return normalizedTitle.length > 0 ? headingText === normalizedTitle : true
+function isMeaningfulNode(node: RootContent): boolean {
+  return normalizeWhitespace(toString(node)).length > 0
 }
 
 function isStandalonePreviewTagline(node: RootContent): boolean {
@@ -67,14 +56,12 @@ function isStandalonePreviewTagline(node: RootContent): boolean {
 export function extractDescriptionText(tree: HTMLRoot, pageTitle?: string): string {
   const children = [...tree.children]
   let startIdx = 0
-  let strippedTitle = false
 
   while (startIdx < children.length && !isMeaningfulNode(children[startIdx])) {
     startIdx++
   }
 
-  if (startIdx < children.length && isDuplicateTitleHeading(children[startIdx], pageTitle)) {
-    strippedTitle = true
+  while (startIdx < children.length && isHeadingElement(children[startIdx])) {
     startIdx++
   }
 
@@ -82,11 +69,7 @@ export function extractDescriptionText(tree: HTMLRoot, pageTitle?: string): stri
     startIdx++
   }
 
-  if (
-    startIdx < children.length &&
-    (strippedTitle || pageTitle) &&
-    isStandalonePreviewTagline(children[startIdx])
-  ) {
+  if (startIdx < children.length && pageTitle && isStandalonePreviewTagline(children[startIdx])) {
     startIdx++
   }
 

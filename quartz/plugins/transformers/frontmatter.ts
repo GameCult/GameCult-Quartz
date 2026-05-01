@@ -63,7 +63,11 @@ function getFirstMarkdownHeading(root: MdRoot): string | undefined {
     return toString(node).trim().length > 0
   })
 
-  if (!firstMeaningfulNode || firstMeaningfulNode.type !== "heading") {
+  if (
+    !firstMeaningfulNode ||
+    firstMeaningfulNode.type !== "heading" ||
+    firstMeaningfulNode.depth !== 1
+  ) {
     return undefined
   }
 

@@ -53,6 +53,17 @@ function isStandalonePreviewTagline(node: RootContent): boolean {
   return isElementNode(onlyChild) && ["em", "strong"].includes(onlyChild.tagName)
 }
 
+function isStructuredMetadataParagraph(node: RootContent): boolean {
+  if (!isElementNode(node) || node.tagName !== "p") {
+    return false
+  }
+
+  const text = normalizeWhitespace(toString(node)).toLowerCase()
+  const labels = ["date:", "location:", "primary actors:", "authors:"]
+  const labelMatches = labels.filter((label) => text.includes(label)).length
+  return labelMatches >= 2
+}
+
 export function extractDescriptionText(tree: HTMLRoot, pageTitle?: string): string {
   const children = [...tree.children]
   let startIdx = 0
@@ -70,6 +81,14 @@ export function extractDescriptionText(tree: HTMLRoot, pageTitle?: string): stri
   }
 
   if (startIdx < children.length && pageTitle && isStandalonePreviewTagline(children[startIdx])) {
+    startIdx++
+  }
+
+  while (startIdx < children.length && !isMeaningfulNode(children[startIdx])) {
+    startIdx++
+  }
+
+  if (startIdx < children.length && isStructuredMetadataParagraph(children[startIdx])) {
     startIdx++
   }
 

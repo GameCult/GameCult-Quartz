@@ -5,7 +5,7 @@ import { googleFontHref, googleFontSubsetHref } from "../util/theme"
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
 import { unescapeHTML } from "../util/escape"
 import { CustomOgImagesEmitterName } from "../plugins/emitters/ogImage"
-import { canonicalSocialUrl, normalizeSocialDescription } from "../util/social"
+import { canonicalSocialUrl, resolveSocialDescription } from "../util/social"
 export default (() => {
   const Head: QuartzComponent = ({
     cfg,
@@ -16,10 +16,9 @@ export default (() => {
     const titleSuffix = cfg.pageTitleSuffix ?? ""
     const title =
       (fileData.frontmatter?.title ?? i18n(cfg.locale).propertyDefaults.title) + titleSuffix
-    const description = normalizeSocialDescription(
-      fileData.frontmatter?.socialDescription ??
-        fileData.frontmatter?.description ??
-        unescapeHTML(fileData.description?.trim() ?? i18n(cfg.locale).propertyDefaults.description),
+    const description = resolveSocialDescription(
+      fileData,
+      unescapeHTML(i18n(cfg.locale).propertyDefaults.description),
     )
 
     const { css, js, additionalHead } = externalResources

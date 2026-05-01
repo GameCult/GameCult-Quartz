@@ -12,7 +12,15 @@ import { BuildCtx } from "../../util/ctx"
 import { QuartzPluginData } from "../vfile"
 import fs from "node:fs/promises"
 import { styleText } from "util"
-import { normalizeSocialDescription } from "../../util/social"
+import {
+  resolveSocialDeck,
+  resolveSocialDescription,
+  resolveSocialImage,
+  resolveSocialMetadata,
+  resolveSocialSection,
+  socialImageLocalPath,
+  socialImageUrl,
+} from "../../util/social"
 
 const defaultOptions: SocialImageOptions = {
   colorScheme: "lightMode",
@@ -22,17 +30,34 @@ const defaultOptions: SocialImageOptions = {
   excludeRoot: false,
 }
 
+function imageMimeType(filePath: string) {
+  const normalizedPath = isAbsoluteURL(filePath) ? new URL(filePath).pathname : filePath
+  const extension = getFileExtension(normalizedPath)?.replace(/^\./, "").toLowerCase()
+  switch (extension) {
+    case "jpg":
+    case "jpeg":
+      return "image/jpeg"
+    case "webp":
+      return "image/webp"
+    case "gif":
+      return "image/gif"
+    default:
+      return "image/png"
+  }
+}
+
 /**
  * Generates social image (OG/twitter standard) and saves it as `.webp` inside the public folder
  * @param opts options for generating image
  */
 async function generateSocialImage(
-  { cfg, description, fonts, title, fileData }: ImageOptions,
+  { cfg, description, deck, section, fonts, title, fileData }: ImageOptions,
   userOpts: SocialImageOptions,
 ): Promise<Readable> {
   const { width, height } = userOpts
   const iconPath = joinSegments(QUARTZ, "static", "icon.png")
   let iconBase64: string | undefined = undefined
+  let imageBase64: string | undefined = undefined
   try {
     const iconData = await fs.readFile(iconPath)
     iconBase64 = `data:image/png;base64,${iconData.toString("base64")}`
@@ -40,14 +65,37 @@ async function generateSocialImage(
     console.warn(styleText("yellow", `Warning: Could not find icon at ${iconPath}`))
   }
 
+  const socialMetadata = resolveSocialMetadata(fileData)
+  const socialImage = resolveSocialImage(fileData, socialMetadata)
+  const localImagePath = socialImageLocalPath(fileData, socialImage)
+
+  if (localImagePath) {
+    try {
+      const imageData = await fs.readFile(localImagePath)
+      const normalizedImageData = await sharp(imageData)
+        .resize(width, height, {
+          fit: "cover",
+          position: "attention",
+        })
+        .png({ compressionLevel: 9 })
+        .toBuffer()
+      imageBase64 = `data:image/png;base64,${normalizedImageData.toString("base64")}`
+    } catch (err) {
+      console.warn(styleText("yellow", `Warning: Could not load social image at ${localImagePath}`))
+    }
+  }
+
   const imageComponent = userOpts.imageStructure({
     cfg,
     userOpts,
     title,
     description,
+    deck,
+    section,
     fonts,
     fileData,
     iconBase64,
+    imageBase64,
   })
 
   const svg = await satori(imageComponent, {
@@ -77,16 +125,20 @@ async function processOgImage(
   const titleSuffix = cfg.pageTitleSuffix ?? ""
   const title =
     (fileData.frontmatter?.title ?? i18n(cfg.locale).propertyDefaults.title) + titleSuffix
-  const description = normalizeSocialDescription(
-    fileData.frontmatter?.socialDescription ??
-      fileData.frontmatter?.description ??
-      unescapeHTML(fileData.description?.trim() ?? i18n(cfg.locale).propertyDefaults.description),
+  const description = resolveSocialDescription(
+    fileData,
+    unescapeHTML(i18n(cfg.locale).propertyDefaults.description),
   )
+  const siteMetadata = resolveSocialMetadata(fileData)
+  const deck = resolveSocialDeck(fileData, description, siteMetadata)
+  const section = resolveSocialSection(fileData, siteMetadata)
 
   const stream = await generateSocialImage(
     {
       title,
       description,
+      deck,
+      section,
       fonts,
       cfg,
       fileData,
@@ -118,7 +170,7 @@ export const CustomOgImages: QuartzEmitterPlugin<Partial<SocialImageOptions>> = 
       const fonts = await getSatoriFonts(headerFont, bodyFont)
 
       for (const [_tree, vfile] of content) {
-        if (vfile.data.frontmatter?.socialImage !== undefined) continue
+        if (fullOptions.excludeRoot && vfile.data.slug === "index") continue
         yield processOgImage(ctx, vfile.data, fonts, fullOptions)
       }
     },
@@ -131,7 +183,7 @@ export const CustomOgImages: QuartzEmitterPlugin<Partial<SocialImageOptions>> = 
       // find all slugs that changed or were added
       for (const changeEvent of changeEvents) {
         if (!changeEvent.file) continue
-        if (changeEvent.file.data.frontmatter?.socialImage !== undefined) continue
+        if (fullOptions.excludeRoot && changeEvent.file.data.slug === "index") continue
         if (changeEvent.type === "add" || changeEvent.type === "change") {
           yield processOgImage(ctx, changeEvent.file.data, fonts, fullOptions)
         }
@@ -147,23 +199,20 @@ export const CustomOgImages: QuartzEmitterPlugin<Partial<SocialImageOptions>> = 
         additionalHead: [
           (pageData) => {
             const isRealFile = pageData.filePath !== undefined
-            let userDefinedOgImagePath = pageData.frontmatter?.socialImage
-
-            if (userDefinedOgImagePath) {
-              userDefinedOgImagePath = isAbsoluteURL(userDefinedOgImagePath)
-                ? userDefinedOgImagePath
-                : `https://${baseUrl}/static/${userDefinedOgImagePath}`
-            }
-
-            const generatedOgImagePath = isRealFile
+            const useGeneratedCard =
+              isRealFile && !(fullOptions.excludeRoot && pageData.slug === "index")
+            const generatedOgImagePath = useGeneratedCard
               ? `https://${baseUrl}/${pageData.slug!}-og-image.webp`
               : undefined
+            const pageSiteMetadata = resolveSocialMetadata(pageData)
+            const pageSocialImage = resolveSocialImage(pageData, pageSiteMetadata)
+            const imageFromMetadata = socialImageUrl(baseUrl, pageData, pageSocialImage)
             const defaultOgImagePath = `https://${baseUrl}/static/og-image.png`
-            const ogImagePath = userDefinedOgImagePath ?? generatedOgImagePath ?? defaultOgImagePath
-            const ogImageMimeType = `image/${getFileExtension(ogImagePath) ?? "png"}`
+            const ogImagePath = generatedOgImagePath ?? imageFromMetadata ?? defaultOgImagePath
+            const ogImageMimeType = imageMimeType(ogImagePath)
             return (
               <>
-                {!userDefinedOgImagePath && (
+                {generatedOgImagePath && (
                   <>
                     <meta property="og:image:width" content={fullOptions.width.toString()} />
                     <meta property="og:image:height" content={fullOptions.height.toString()} />

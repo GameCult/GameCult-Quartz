@@ -1,4 +1,4 @@
-import { Root as HTMLRoot } from "hast"
+import { Element, Root as HTMLRoot, RootContent } from "hast"
 import { toString } from "hast-util-to-string"
 import { QuartzTransformerPlugin } from "../types"
 import { escapeHTML } from "../../util/escape"
@@ -20,6 +20,83 @@ const urlRegex = new RegExp(
   "g",
 )
 
+function normalizeWhitespace(text: string): string {
+  return text.replace(/\s+/g, " ").trim()
+}
+
+function isElementNode(node: RootContent): node is Element {
+  return node.type === "element"
+}
+
+function isMeaningfulNode(node: RootContent): boolean {
+  return normalizeWhitespace(toString(node)).length > 0
+}
+
+function isDuplicateTitleHeading(node: RootContent, pageTitle?: string): boolean {
+  if (!isElementNode(node) || node.tagName !== "h1") {
+    return false
+  }
+
+  const headingText = normalizeWhitespace(toString(node))
+  const normalizedTitle = normalizeWhitespace(pageTitle ?? "")
+
+  if (headingText.length === 0) {
+    return false
+  }
+
+  return normalizedTitle.length > 0 ? headingText === normalizedTitle : true
+}
+
+function isStandalonePreviewTagline(node: RootContent): boolean {
+  if (!isElementNode(node) || node.tagName !== "p") {
+    return false
+  }
+
+  const meaningfulChildren = node.children.filter(
+    (child) => !(child.type === "text" && normalizeWhitespace(child.value).length === 0),
+  )
+
+  if (meaningfulChildren.length !== 1) {
+    return false
+  }
+
+  const onlyChild = meaningfulChildren[0]
+  return isElementNode(onlyChild) && ["em", "strong"].includes(onlyChild.tagName)
+}
+
+export function extractDescriptionText(tree: HTMLRoot, pageTitle?: string): string {
+  const children = [...tree.children]
+  let startIdx = 0
+  let strippedTitle = false
+
+  while (startIdx < children.length && !isMeaningfulNode(children[startIdx])) {
+    startIdx++
+  }
+
+  if (startIdx < children.length && isDuplicateTitleHeading(children[startIdx], pageTitle)) {
+    strippedTitle = true
+    startIdx++
+  }
+
+  while (startIdx < children.length && !isMeaningfulNode(children[startIdx])) {
+    startIdx++
+  }
+
+  if (
+    startIdx < children.length &&
+    (strippedTitle || pageTitle) &&
+    isStandalonePreviewTagline(children[startIdx])
+  ) {
+    startIdx++
+  }
+
+  while (startIdx < children.length && !isMeaningfulNode(children[startIdx])) {
+    startIdx++
+  }
+
+  return escapeHTML(toString({ ...tree, children: children.slice(startIdx) }))
+}
+
 export const Description: QuartzTransformerPlugin<Partial<Options>> = (userOpts) => {
   const opts = { ...defaultOptions, ...userOpts }
   return {
@@ -29,7 +106,7 @@ export const Description: QuartzTransformerPlugin<Partial<Options>> = (userOpts)
         () => {
           return async (tree: HTMLRoot, file) => {
             let frontMatterDescription = file.data.frontmatter?.description
-            let text = escapeHTML(toString(tree))
+            let text = extractDescriptionText(tree, file.data.frontmatter?.title)
 
             if (opts.replaceExternalLinks) {
               frontMatterDescription = frontMatterDescription?.replace(

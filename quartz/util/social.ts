@@ -161,13 +161,13 @@ export function resolveSocialDeck(
     return explicitDeck.trim()
   }
 
+  if (siteMetadata.deck && siteMetadata.deck.trim().length > 0) {
+    return siteMetadata.deck.trim()
+  }
+
   const tagline = extractTopTagline(fileData.htmlAst)
   if (tagline) {
     return tagline
-  }
-
-  if (siteMetadata.deck && siteMetadata.deck.trim().length > 0) {
-    return siteMetadata.deck.trim()
   }
 
   return description

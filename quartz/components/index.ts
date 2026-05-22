@@ -23,9 +23,11 @@ import Breadcrumbs from "./Breadcrumbs"
 import Comments from "./Comments"
 import Flex from "./Flex"
 import ConditionalRender from "./ConditionalRender"
+import AutoIndexFolder from "./AutoIndexFolder"
 
 export {
   ArticleTitle,
+  AutoIndexFolder,
   Content,
   TagContent,
   FolderContent,

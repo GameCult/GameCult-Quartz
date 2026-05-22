@@ -39,6 +39,26 @@ Then from a consumer repo, use its launcher script, or call the shared builder d
 node ..\\GameCult-Quartz\\scripts\\build-site.mjs build --siteRoot E:\\Projects\\gamecult-site --contentDir GameCult --overlayDir site --outputDir quartz-site/public
 ```
 
+## Shared Components
+
+### `AutoIndexFolder`
+
+Use `Component.AutoIndexFolder(...)` when a consumer site needs a folder landing page to
+render a newest-first card index from Markdown files under that folder. The shared engine owns
+the repeated mechanics:
+
+- find pages under `rootSlug`
+- exclude the folder `index` page
+- honor a site-chosen hide frontmatter flag
+- sort by published, created, then modified date
+- derive author labels from `author` or `authors`
+- render card markup with a site-chosen class prefix
+- build year-grouped sidebar data with `buildAutoIndexSidebarData`
+
+Consumer overlays still own the site-specific decision to use the component, the display copy,
+the class prefix, and the CSS. If an index needs custom editorial behavior that only one site
+understands, keep that behavior in the site overlay.
+
 ## Design Rule
 
 If a change only makes sense for one site, it does not belong in this repo. Put it in that site's overlay and leave the engine sober.

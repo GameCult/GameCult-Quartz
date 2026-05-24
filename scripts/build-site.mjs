@@ -70,7 +70,13 @@ async function copyEngineScaffold(runtimeRoot) {
     const dest = path.join(runtimeRoot, entry.name)
 
     if (entry.isDirectory()) {
-      await fs.cp(source, dest, { recursive: true })
+      await fs.cp(source, dest, {
+        recursive: true,
+        filter: (candidate) => {
+          const relative = path.relative(engineRoot, candidate).split(path.sep).join("/")
+          return relative !== "quartz/graph-spa/node_modules"
+        },
+      })
     } else {
       await fs.copyFile(source, dest)
     }

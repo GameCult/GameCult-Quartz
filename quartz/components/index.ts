@@ -24,6 +24,7 @@ import Comments from "./Comments"
 import Flex from "./Flex"
 import ConditionalRender from "./ConditionalRender"
 import AutoIndexFolder from "./AutoIndexFolder"
+import GameCultGraphSpaShell from "./GameCultGraphSpaShell"
 
 export {
   ArticleTitle,
@@ -52,4 +53,7 @@ export {
   Comments,
   Flex,
   ConditionalRender,
+  GameCultGraphSpaShell,
 }
+
+export type { GameCultGraphSpaShellOptions } from "./GameCultGraphSpaShell"

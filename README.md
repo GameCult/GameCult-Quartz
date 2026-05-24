@@ -6,6 +6,7 @@ Shared Quartz engine, reusable GitHub Pages workflow, and the minimum amount of 
 
 - Shared Quartz source, dependencies, and build tooling
 - `scripts/build-site.mjs` for staging a site repo against the shared engine
+- `scripts/build-graph-spa.mjs` for building the shared fullscreen graph SPA into a consumer site
 - Reusable Pages workflow at `.github/workflows/quartz-pages.yml`
 - Generic defaults only
 
@@ -38,6 +39,21 @@ Then from a consumer repo, use its launcher script, or call the shared builder d
 ```powershell
 node ..\\GameCult-Quartz\\scripts\\build-site.mjs build --siteRoot E:\\Projects\\gamecult-site --contentDir GameCult --overlayDir site --outputDir quartz-site/public
 ```
+
+## Fullscreen Graph SPA
+
+Consumer sites can render the shared graph surface with `Component.GameCultGraphSpaShell(...)`.
+The component only owns the mount point and asset tags; the consumer overlay decides where it appears.
+
+Build the static SPA assets into the consumer repo when its graph payload changes:
+
+```powershell
+node ..\\GameCult-Quartz\\scripts\\build-graph-spa.mjs --siteRoot E:\\Projects\\Mimir --outputDir static/epiphany-graph
+```
+
+The SPA source lives in `quartz/graph-spa`. It currently imports the shared `EpiphanyGraphViewer`
+from a sibling `EpiphanyGraph` checkout during local builds, so generated assets should be committed
+by consumer sites until that viewer is packaged as a normal dependency.
 
 ## Shared Components
 

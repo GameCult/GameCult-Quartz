@@ -23,6 +23,14 @@ type QuartzContentEntry = {
 
 type QuartzContentIndex = Record<string, QuartzContentEntry>
 
+type GraphSpaConfig = {
+  title?: string
+  architectureDescription?: string
+  allowedSlugPrefixes?: string[]
+  blockedSlugPrefixes?: string[]
+  blockedPathSegments?: string[]
+}
+
 type ArticleState =
   | {
       status: "idle"
@@ -45,8 +53,18 @@ type ArticleState =
 declare global {
   interface Window {
     fetchData?: Promise<QuartzContentIndex>
+    gameCultGraphSpaConfig?: GraphSpaConfig
   }
 }
+
+const DEFAULT_BLOCKED_SLUG_PREFIXES = ["Inspirations/", "GameCult-Quartz/"]
+const DEFAULT_BLOCKED_PATH_SEGMENTS = [
+  "/.git/",
+  "/node_modules/",
+  "node_modules/",
+  "/quartz-site/",
+  "/site/quartz/",
+]
 
 type GraphErrorBoundaryState = {
   error: Error | null
@@ -103,6 +121,42 @@ function normalizeSlug(slug: string) {
   }
 
   return slug
+}
+
+function graphSpaConfig() {
+  return window.gameCultGraphSpaConfig ?? {}
+}
+
+function slugMatchesPrefix(slug: string, prefix: string) {
+  const normalizedPrefix = normalizeSlug(prefix.replace(/\/$/, ""))
+
+  return slug === normalizedPrefix || slug.startsWith(`${normalizedPrefix}/`)
+}
+
+function isAllowedGraphSlug(slug: string, entry: QuartzContentEntry, config = graphSpaConfig()) {
+  const normalizedSlug = normalizeSlug(slug)
+  const blockedPrefixes = [...DEFAULT_BLOCKED_SLUG_PREFIXES, ...(config.blockedSlugPrefixes ?? [])]
+
+  if (blockedPrefixes.some((prefix) => slugMatchesPrefix(normalizedSlug, prefix))) {
+    return false
+  }
+
+  const filePath = (entry.filePath ?? "").replace(/\\/g, "/")
+  const blockedPathSegments = [
+    ...DEFAULT_BLOCKED_PATH_SEGMENTS,
+    ...(config.blockedPathSegments ?? []),
+  ]
+
+  if (blockedPathSegments.some((segment) => filePath.includes(segment))) {
+    return false
+  }
+
+  const allowedPrefixes = config.allowedSlugPrefixes ?? []
+
+  return (
+    allowedPrefixes.length === 0 ||
+    allowedPrefixes.some((prefix) => slugMatchesPrefix(normalizedSlug, prefix))
+  )
 }
 
 function sectionForSlug(slug: string) {
@@ -267,7 +321,7 @@ function buildGraphState(contentIndex: QuartzContentIndex): EpiphanyGraphsState 
 
       return [normalizedSlug, { ...entry, slug: normalizedSlug }] as [string, QuartzContentEntry]
     })
-    .filter(([slug]) => !slug.startsWith("Inspirations/"))
+    .filter(([slug, entry]) => isAllowedGraphSlug(slug, entry))
     .sort(([left], [right]) => left.localeCompare(right))
 
   const entryBySlug = new Map(entries)
@@ -355,10 +409,15 @@ async function loadGraphState() {
     : await fetch("/static/contentIndex.json").then(
         (response) => response.json() as Promise<QuartzContentIndex>,
       )
+  const filteredContentIndex = Object.fromEntries(
+    Object.entries(contentIndex).filter(([slug, entry]) =>
+      isAllowedGraphSlug(normalizeSlug(entry.slug || slug), entry),
+    ),
+  )
 
   return {
-    contentIndex,
-    graphState: buildGraphState(contentIndex),
+    contentIndex: filteredContentIndex,
+    graphState: buildGraphState(filteredContentIndex),
   }
 }
 
@@ -573,7 +632,7 @@ function App() {
       <GraphErrorBoundary>
         <EpiphanyGraphViewer
           state={graphState}
-          title="GameCult Knowledge Graph"
+          title={graphSpaConfig().title ?? "GameCult Knowledge Graph"}
           selection={selection}
           viewportTarget={viewportTarget}
           onViewportTargetComplete={onViewportTargetComplete}
@@ -604,6 +663,7 @@ function App() {
           }}
           graphDescriptions={{
             architecture:
+              graphSpaConfig().architectureDescription ??
               "Notes are individual vault pages from the gamecult knowledge base. Their edges are Quartz wiki links, with incoming backlinks counted into each node.",
             dataflow:
               "Sections are folder-level clusters. Their edges summarize how links and backlinks move between regions of the vault.",

@@ -4,6 +4,13 @@ export type GameCultGraphSpaShellOptions = {
   stylesheetHref: string
   moduleSrc: string
   rootClassName?: string
+  config?: {
+    title?: string
+    architectureDescription?: string
+    allowedSlugPrefixes?: string[]
+    blockedSlugPrefixes?: string[]
+    blockedPathSegments?: string[]
+  }
 }
 
 export default ((options?: Partial<GameCultGraphSpaShellOptions>) => {
@@ -18,6 +25,13 @@ export default ((options?: Partial<GameCultGraphSpaShellOptions>) => {
     <>
       <link rel="stylesheet" href={shellOptions.stylesheetHref} />
       <div class={shellOptions.rootClassName}></div>
+      {shellOptions.config ? (
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.gameCultGraphSpaConfig = ${JSON.stringify(shellOptions.config)};`,
+          }}
+        />
+      ) : null}
       <script type="module" src={shellOptions.moduleSrc}></script>
     </>
   )

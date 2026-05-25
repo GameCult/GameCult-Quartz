@@ -5,6 +5,7 @@ import { EpiphanyGraphViewer } from "../../../../EpiphanyGraph/web/epiphany-grap
 import type {
   EpiphanyGraphEdge,
   EpiphanyGraphNode,
+  EpiphanyGraphLayoutModeConfig,
   EpiphanyGraphsState,
   GraphKey,
   PositionedNode,
@@ -26,6 +27,7 @@ type QuartzContentIndex = Record<string, QuartzContentEntry>
 type GraphSpaConfig = {
   title?: string
   architectureDescription?: string
+  layoutMode?: EpiphanyGraphLayoutModeConfig
   allowedSlugPrefixes?: string[]
   blockedSlugPrefixes?: string[]
   blockedPathSegments?: string[]
@@ -124,6 +126,18 @@ function normalizeSlug(slug: string) {
 }
 
 function graphSpaConfig() {
+  const mountedConfig = document.querySelector<HTMLElement>(
+    ".gamecult-epiphany-graph-root[data-graph-config]",
+  )?.dataset.graphConfig
+
+  if (mountedConfig) {
+    try {
+      return JSON.parse(mountedConfig) as GraphSpaConfig
+    } catch (error) {
+      console.warn("Could not parse graph SPA config.", error)
+    }
+  }
+
   return window.gameCultGraphSpaConfig ?? {}
 }
 
@@ -668,10 +682,7 @@ function App() {
             dataflow:
               "Sections are folder-level clusters. Their edges summarize how links and backlinks move between regions of the vault.",
           }}
-          layoutMode={{
-            architecture: "combined-force",
-            dataflow: "combined-force",
-          }}
+          layoutMode={graphSpaConfig().layoutMode ?? "layered"}
         />
       </GraphErrorBoundary>
     </main>

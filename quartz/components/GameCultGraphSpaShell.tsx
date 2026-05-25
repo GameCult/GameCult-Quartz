@@ -7,6 +7,10 @@ export type GameCultGraphSpaShellOptions = {
   config?: {
     title?: string
     architectureDescription?: string
+    layoutMode?: "layered" | "stress" | "force" | "combined-force" | {
+      architecture?: "layered" | "stress" | "force" | "combined-force"
+      dataflow?: "layered" | "stress" | "force" | "combined-force"
+    }
     allowedSlugPrefixes?: string[]
     blockedSlugPrefixes?: string[]
     blockedPathSegments?: string[]
@@ -24,14 +28,10 @@ export default ((options?: Partial<GameCultGraphSpaShellOptions>) => {
   const GameCultGraphSpaShell: QuartzComponent = () => (
     <>
       <link rel="stylesheet" href={shellOptions.stylesheetHref} />
-      <div class={shellOptions.rootClassName}></div>
-      {shellOptions.config ? (
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `window.gameCultGraphSpaConfig = ${JSON.stringify(shellOptions.config)};`,
-          }}
-        />
-      ) : null}
+      <div
+        class={shellOptions.rootClassName}
+        data-graph-config={shellOptions.config ? JSON.stringify(shellOptions.config) : undefined}
+      ></div>
       <script type="module" src={shellOptions.moduleSrc}></script>
     </>
   )

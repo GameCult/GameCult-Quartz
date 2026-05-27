@@ -60,14 +60,15 @@ by consumer sites until that viewer is packaged as a normal dependency.
 ### `Plugin.InkEmbedder`
 
 Use `Plugin.InkEmbedder()` in a consumer site's emitter list to enable reusable
-Ink embeds. The plugin contributes the shared Ink runtime loader, player script,
-and CSS from `quartz/static/interactive/`.
+Ink embeds. The plugin copies Sai's packaged browser assets from `@gamecult/sai`
+into the built site's `/static/interactive/` directory and injects the player
+CSS and script.
 
 Authors embed stories with plain HTML:
 
 ```html
 <div
-  class="aetheria-ink-player"
+  class="sai-player"
   data-ink-format="visual-novel"
   data-ink-story="/static/interactive/example/story.ink.json"
   data-visual-manifest="/static/interactive/example/visual-manifest.json"
@@ -85,7 +86,9 @@ Supported formats:
   captions, and optional references.
 
 The legacy `data-ink-mode` attribute still works. Future sprite staging should
-extend this embedder rather than inventing another site-local player.
+extend Sai rather than inventing another site-local player. Existing
+`.aetheria-ink-player` containers are still initialised by Sai as a migration
+bridge, but new embeds should use `.sai-player`.
 
 ## Shared Components
 

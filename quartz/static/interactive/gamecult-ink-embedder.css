@@ -329,45 +329,69 @@
 
 .aetheria-ink-speaker-body {
   display: grid;
-  grid-template-columns: minmax(0, 0.75fr) minmax(22rem, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(24rem, 34%);
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 0.35rem 0.85rem;
+  gap: 0.32rem 1rem;
   align-content: stretch;
   min-width: 0;
-  padding: 0.72rem 0.9rem;
+  padding: 0.78rem 0.95rem;
 }
 
 .aetheria-ink-speaker-controls {
   grid-row: 1 / span 2;
   grid-column: 2;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
+  display: grid;
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 0.15rem;
   align-items: stretch;
   align-self: stretch;
   margin-top: 0;
+  padding-left: 0.85rem;
+  border-left: 1px solid rgba(255, 198, 120, 0.18);
 }
 
 .aetheria-ink-speaker-controls .aetheria-ink-choices {
   width: 100%;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.4rem;
+  grid-template-columns: 1fr;
+  gap: 0.15rem;
 }
 
-.aetheria-ink-speaker-controls .aetheria-ink-choice {
+.aetheria-ink-speaker-controls .aetheria-ink-choices:empty {
+  display: none;
+}
+
+.aetheria-ink-speaker-controls .aetheria-ink-choice,
+.aetheria-ink-speaker-controls .aetheria-ink-continue {
   min-height: 0;
-  padding: 0.44rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.68rem;
-  line-height: 1.14;
+  padding: 0.24rem 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: rgba(255, 236, 207, 0.96);
+  font-size: 0.88rem;
+  line-height: 1.18;
+  text-align: left;
 }
 
-.aetheria-ink-speaker-controls .aetheria-ink-continue,
 .aetheria-ink-speaker-controls .aetheria-ink-restart {
+  display: none;
+}
+
+.aetheria-ink-speaker-controls .aetheria-ink-continue {
   justify-self: auto;
-  align-self: center;
-  padding: 0.46rem 0.72rem;
-  font-size: 0.68rem;
+  align-self: stretch;
+  font-family: var(--bodyFont);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.aetheria-ink-speaker-controls .aetheria-ink-choice:hover,
+.aetheria-ink-speaker-controls .aetheria-ink-choice:focus-visible,
+.aetheria-ink-speaker-controls .aetheria-ink-continue:hover,
+.aetheria-ink-speaker-controls .aetheria-ink-continue:focus-visible {
+  background: transparent;
+  color: rgba(255, 198, 120, 1);
+  transform: translateX(2px);
 }
 
 .aetheria-ink-speaker-name {
@@ -375,7 +399,7 @@
   margin: 0;
   color: rgba(255, 198, 120, 0.96);
   font-family: var(--titleFont);
-  font-size: 0.82rem;
+  font-size: 0.96rem;
   letter-spacing: 0.1em;
   line-height: 1.15;
   text-transform: uppercase;
@@ -385,8 +409,8 @@
   grid-column: 1;
   margin: 0;
   color: rgba(246, 241, 226, 0.96);
-  font-size: 0.84rem;
-  line-height: 1.28;
+  font-size: 1.02rem;
+  line-height: 1.32;
   text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
 }
 
@@ -404,6 +428,8 @@
   .aetheria-ink-speaker-controls {
     grid-row: auto;
     grid-column: 1;
+    padding-left: 0;
+    border-left: 0;
   }
 
   .aetheria-ink-speaker-controls .aetheria-ink-choices {

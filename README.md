@@ -55,6 +55,38 @@ The SPA source lives in `quartz/graph-spa`. It currently imports the shared `Epi
 from a sibling `EpiphanyGraph` checkout during local builds, so generated assets should be committed
 by consumer sites until that viewer is packaged as a normal dependency.
 
+## Shared Interactive Embeds
+
+### `Plugin.InkEmbedder`
+
+Use `Plugin.InkEmbedder()` in a consumer site's emitter list to enable reusable
+Ink embeds. The plugin contributes the shared Ink runtime loader, player script,
+and CSS from `quartz/static/interactive/`.
+
+Authors embed stories with plain HTML:
+
+```html
+<div
+  class="aetheria-ink-player"
+  data-ink-format="visual-novel"
+  data-ink-story="/static/interactive/example/story.ink.json"
+  data-visual-manifest="/static/interactive/example/visual-manifest.json"
+  data-scene-label="Scene Name"
+></div>
+```
+
+Supported formats:
+
+- `data-ink-format="raven"` or omitted: cheap interactive-fiction transcript
+  layout for Raven Collective-style Ink.
+- `data-ink-format="visual-novel"`: fixed scene view with bottom dialogue bar,
+  speaker avatar, and choices/continue controls inside the dialogue surface.
+- `data-ink-format="cinematic"`: slide/deck layout with background plates,
+  captions, and optional references.
+
+The legacy `data-ink-mode` attribute still works. Future sprite staging should
+extend this embedder rather than inventing another site-local player.
+
 ## Shared Components
 
 ### `AutoIndexFolder`

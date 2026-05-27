@@ -1,0 +1,427 @@
+.aetheria-ink-player {
+  display: grid;
+  gap: 0.9rem;
+  margin: 1.3rem 0 1.6rem;
+  padding: clamp(0.8rem, 2vw, 1.1rem);
+  border: 1px solid rgba(255, 198, 120, 0.2);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 16% 12%, rgba(255, 198, 120, 0.12), transparent 24%),
+    radial-gradient(circle at 82% 10%, rgba(104, 172, 255, 0.1), transparent 26%),
+    linear-gradient(180deg, rgba(7, 8, 12, 0.98), rgba(9, 13, 19, 0.96));
+  box-shadow:
+    0 18px 38px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.aetheria-ink-status {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: rgba(255, 138, 42, 0.96);
+  font-family: var(--titleFont);
+  font-size: 0.8rem;
+  font-weight: 300;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.aetheria-ink-cinematic-stage {
+  position: relative;
+  min-height: clamp(480px, 62vh, 680px);
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 198, 120, 0.18);
+  background: #05070b;
+  box-shadow:
+    0 28px 68px rgba(0, 0, 0, 0.44),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.aetheria-ink-visual,
+.aetheria-ink-visual-plate,
+.aetheria-ink-visual-scrim {
+  position: absolute;
+  inset: 0;
+}
+
+.aetheria-ink-visual-plate {
+  background-position: center;
+  background-size: cover;
+  opacity: 0;
+  transform: scale(1.035);
+  filter: saturate(1.08) contrast(1.02) brightness(0.86);
+  transition:
+    opacity 780ms ease,
+    transform 1400ms ease;
+}
+
+.aetheria-ink-visual-plate.is-active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.aetheria-ink-visual-scrim {
+  background:
+    radial-gradient(
+      circle at 50% 32%,
+      transparent 0%,
+      rgba(0, 0, 0, 0.1) 34%,
+      rgba(0, 0, 0, 0.7) 100%
+    ),
+    linear-gradient(180deg, rgba(3, 5, 8, 0.18), rgba(3, 5, 8, 0.82));
+}
+
+.aetheria-ink-visual-caption {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  margin: 0;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid rgba(255, 198, 120, 0.24);
+  border-radius: 999px;
+  background: rgba(5, 8, 13, 0.62);
+  color: rgba(255, 225, 184, 0.92);
+  font-family: var(--titleFont);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  backdrop-filter: blur(12px);
+}
+
+.aetheria-ink-slide-references {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1;
+  width: min(24rem, calc(100% - 2rem));
+  max-width: 42%;
+  padding: 0.62rem 0.72rem 0.68rem;
+  border: 1px solid rgba(255, 198, 120, 0.22);
+  border-radius: 18px;
+  background: rgba(5, 8, 13, 0.68);
+  color: rgba(226, 238, 252, 0.9);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(14px);
+}
+
+.aetheria-ink-slide-references[hidden] {
+  display: none;
+}
+
+.aetheria-ink-slide-references-title {
+  margin: 0 0 0.38rem;
+  color: rgba(255, 225, 184, 0.94);
+  font-family: var(--titleFont);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.aetheria-ink-slide-references-list {
+  display: grid;
+  gap: 0.24rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.aetheria-ink-slide-references-list li {
+  margin: 0;
+  color: rgba(226, 238, 252, 0.88);
+  font-size: clamp(0.72rem, 1.1vw, 0.82rem);
+  line-height: 1.28;
+}
+
+.aetheria-ink-slide-references-list a {
+  color: rgba(255, 198, 120, 0.94);
+}
+
+.aetheria-ink-slide-references-list a:hover,
+.aetheria-ink-slide-references-list a:focus-visible {
+  color: #fff3e8;
+}
+
+.aetheria-ink-section {
+  position: absolute;
+  inset: auto clamp(0.85rem, 3vw, 2rem) clamp(1.5rem, 6vh, 4rem);
+  display: grid;
+  place-items: end stretch;
+}
+
+.aetheria-ink-section-text {
+  max-width: min(760px, 100%);
+  padding: clamp(1rem, 2.3vw, 1.45rem);
+  border: 1px solid rgba(255, 198, 120, 0.18);
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(7, 10, 15, 0.72), rgba(10, 16, 23, 0.54)),
+    radial-gradient(circle at 14% 0%, rgba(255, 198, 120, 0.14), transparent 26%);
+  box-shadow:
+    0 20px 54px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(18px);
+}
+
+.aetheria-ink-line,
+.aetheria-ink-end,
+.aetheria-ink-error {
+  margin: 0;
+  color: rgba(246, 241, 226, 0.96);
+  font-size: clamp(1.05rem, 1.8vw, 1.32rem);
+  line-height: 1.65;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
+}
+
+.aetheria-ink-end,
+.aetheria-ink-error {
+  position: relative;
+  z-index: 1;
+}
+
+.aetheria-ink-error {
+  color: #ffb7a6;
+}
+
+.aetheria-ink-section-text.is-entering {
+  animation: aetheriaInkTextIn 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.aetheria-ink-section-text.is-exiting {
+  animation: aetheriaInkTextOut 220ms ease both;
+}
+
+.aetheria-ink-player-speaker {
+  box-sizing: border-box;
+  width: min(1120px, calc(100vw - 24rem));
+  max-width: calc(100vw - 2rem);
+  gap: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.aetheria-ink-player-speaker > .aetheria-ink-status {
+  display: none;
+}
+
+.aetheria-ink-speaker-stage {
+  position: relative;
+  height: clamp(320px, 42vw, 520px);
+  max-height: calc(100vh - 8rem);
+  min-height: 320px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: #05070b;
+  box-shadow: 0 26px 72px rgba(0, 0, 0, 0.44);
+}
+
+.aetheria-ink-speaker-background,
+.aetheria-ink-speaker-scrim {
+  position: absolute;
+  inset: 0;
+}
+
+.aetheria-ink-speaker-background {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  filter: saturate(1.06) contrast(1.02) brightness(0.92);
+}
+
+.aetheria-ink-speaker-scrim {
+  background:
+    linear-gradient(180deg, rgba(3, 4, 7, 0.04), rgba(3, 4, 7, 0.48) 56%, rgba(3, 4, 7, 0.76)),
+    radial-gradient(
+      circle at 50% 24%,
+      transparent 0%,
+      rgba(0, 0, 0, 0.08) 44%,
+      rgba(0, 0, 0, 0.5) 100%
+    );
+}
+
+.aetheria-ink-speaker-scene {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1;
+  margin: 0;
+  padding: 0.42rem 0.68rem;
+  border: 1px solid rgba(255, 198, 120, 0.24);
+  border-radius: 999px;
+  background: rgba(5, 8, 13, 0.64);
+  color: rgba(255, 225, 184, 0.92);
+  font-family: var(--titleFont);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  backdrop-filter: blur(12px);
+}
+
+.aetheria-ink-speaker-scene[hidden] {
+  display: none;
+}
+
+.aetheria-ink-speaker-card {
+  position: absolute;
+  box-sizing: border-box;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: clamp(128px, 15vw, 190px) minmax(0, 1fr);
+  align-items: stretch;
+  width: 100%;
+  min-height: clamp(150px, 24vh, 220px);
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgba(255, 198, 120, 0.24);
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 0;
+  border-radius: 0;
+  background:
+    linear-gradient(135deg, rgba(5, 8, 13, 0.9), rgba(9, 14, 22, 0.78)),
+    radial-gradient(circle at 8% 4%, rgba(255, 198, 120, 0.14), transparent 26%);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px);
+}
+
+.aetheria-ink-speaker-card.is-entering {
+  animation: aetheriaInkSpeakerIn 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.aetheria-ink-speaker-card.is-exiting {
+  animation: aetheriaInkTextOut 160ms ease both;
+}
+
+.aetheria-ink-speaker-avatar-shell {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: inherit;
+  overflow: hidden;
+  border: 0;
+  border-right: 1px solid rgba(255, 198, 120, 0.24);
+  border-radius: 0;
+  background: rgba(3, 5, 8, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.aetheria-ink-speaker-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.aetheria-ink-speaker-avatar[hidden] {
+  display: none;
+}
+
+.aetheria-ink-speaker-body {
+  display: grid;
+  gap: 0.35rem;
+  align-content: center;
+  min-width: 0;
+  padding: clamp(0.85rem, 2vw, 1.35rem);
+}
+
+.aetheria-ink-speaker-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.65rem;
+}
+
+.aetheria-ink-speaker-controls .aetheria-ink-choices {
+  width: 100%;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: 0.5rem;
+}
+
+.aetheria-ink-speaker-controls .aetheria-ink-continue,
+.aetheria-ink-speaker-controls .aetheria-ink-restart {
+  justify-self: auto;
+}
+
+.aetheria-ink-speaker-name {
+  margin: 0;
+  color: rgba(255, 198, 120, 0.96);
+  font-family: var(--titleFont);
+  font-size: clamp(0.9rem, 1.5vw, 1.05rem);
+  letter-spacing: 0.1em;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.aetheria-ink-speaker-line {
+  margin: 0;
+  color: rgba(246, 241, 226, 0.96);
+  font-size: clamp(1rem, 1.65vw, 1.22rem);
+  line-height: 1.55;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
+}
+
+.aetheria-ink-choices {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 0.65rem;
+}
+
+.aetheria-ink-choice,
+.aetheria-ink-continue,
+.aetheria-ink-restart {
+  position: relative;
+  z-index: 1;
+  cursor: pointer;
+  border: 1px solid rgba(255, 198, 120, 0.28);
+  background: rgba(255, 198, 120, 0.1);
+  color: rgba(255, 235, 205, 0.94);
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.aetheria-ink-choice {
+  padding: 0.75rem 0.95rem;
+  border-radius: 18px;
+  text-align: left;
+}
+
+.aetheria-ink-continue,
+.aetheria-ink-restart {
+  justify-self: center;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  font-family: var(--titleFont);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.aetheria-ink-choice:hover,
+.aetheria-ink-choice:focus-visible,
+.aetheria-ink-continue:hover,
+.aetheria-ink-continue:focus-visible,
+.aetheria-ink-restart:hover,
+.aetheria-ink-restart:focus-visible {
+  border-color: rgba(255, 198, 120, 0.6);
+  background: rgba(255, 198, 120, 0.18);
+  transform: translateY(-1px);
+}
+
+.aetheria-ink-continue[hidden],
+.aetheria-ink-variables[hidden] {
+  display: none;
+}

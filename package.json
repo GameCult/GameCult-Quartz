@@ -37,7 +37,7 @@
   "dependencies": {
     "@clack/prompts": "^0.11.0",
     "@floating-ui/dom": "^1.7.4",
-    "@gamecult/sai": "github:GameCult/Sai#c9f067a906bc13f1d98e9199f3cf5d5852f8b4ab",
+    "@gamecult/sai": "github:GameCult/Sai#162c6c62c5dbad52a956595bbb549d6a970a72d8",
     "@myriaddreamin/rehype-typst": "^0.6.0",
     "@napi-rs/simple-git": "0.1.22",
     "@tweenjs/tween.js": "^25.0.0",

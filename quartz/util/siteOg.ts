@@ -1,4 +1,5 @@
 import { QuartzPluginData } from "../plugins/vfile"
+import { mergeHierarchicalSocialMetadata, socialMetadataSlug } from "./siteSocialOverrides"
 
 export type SocialImageRef =
   | {
@@ -23,6 +24,13 @@ export type SiteSocialMetadata = {
   image?: SocialImageRef
 }
 
-export function resolveSiteSocialMetadata(_fileData: QuartzPluginData): SiteSocialMetadata {
-  return {}
+const siteSocialMetadata: SiteSocialMetadata = {}
+const siteSocialMetadataOverrides: Record<string, SiteSocialMetadata> = {}
+
+export function resolveSiteSocialMetadata(fileData: QuartzPluginData): SiteSocialMetadata {
+  return mergeHierarchicalSocialMetadata(
+    siteSocialMetadata,
+    socialMetadataSlug(fileData),
+    siteSocialMetadataOverrides,
+  )
 }

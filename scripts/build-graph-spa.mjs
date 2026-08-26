@@ -1,5 +1,6 @@
 import fs from "node:fs/promises"
 import path from "node:path"
+import { createHash } from "node:crypto"
 import { spawn } from "node:child_process"
 import { execFileSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
@@ -66,22 +67,15 @@ async function prepareNorn(nornRoot) {
     )
   }
 
-  const actualRevision = execFileSync("git", ["-C", nornRoot, "rev-parse", "HEAD"], {
-    encoding: "utf8",
-  }).trim()
+  const actualRevision = admitGitWorktree("Norn", nornRoot)
   if (actualRevision !== expectedRevision) {
     throw new Error(`Norn must be revision ${expectedRevision}; found ${actualRevision}.`)
   }
 
-  const status = execFileSync(
-    "git",
-    ["-C", nornRoot, "status", "--porcelain", "--untracked-files=normal"],
-    { encoding: "utf8" },
-  ).trim()
-  if (status) {
-    throw new Error(`Norn must be clean before GameCult-Quartz consumes it: ${nornRoot}`)
-  }
+  return { actualRevision, tsupPath, viewerRoot }
+}
 
+async function buildNorn({ tsupPath, viewerRoot }) {
   if (!(await exists(tsupPath))) {
     throw new Error(`Norn dependencies are missing. Run npm ci in '${viewerRoot}'.`)
   }
@@ -102,8 +96,55 @@ async function prepareNorn(nornRoot) {
     ],
     viewerRoot,
   )
+}
 
-  return viewerRoot
+function admitGitWorktree(name, root) {
+  const revision = execFileSync("git", ["-C", root, "rev-parse", "HEAD"], {
+    encoding: "utf8",
+  }).trim()
+  const status = execFileSync(
+    "git",
+    ["-C", root, "status", "--porcelain", "--untracked-files=normal"],
+    { encoding: "utf8" },
+  ).trim()
+
+  if (status) {
+    throw new Error(`${name} must be clean before the graph SPA is admitted: ${root}`)
+  }
+
+  return revision
+}
+
+const BUNDLE_ARTIFACTS = ["viewer.html", "assets/react.js", "assets/viewer.css", "assets/viewer.js"]
+
+async function sha256(targetPath) {
+  return createHash("sha256")
+    .update(await fs.readFile(targetPath))
+    .digest("hex")
+}
+
+async function bundleProvenance(outputRoot, quartzRevision, nornRevision) {
+  const lines = [
+    "schema=gamecult.graph_spa_bundle.v0",
+    `gamecult_quartz_revision=${quartzRevision}`,
+    `norn_revision=${nornRevision}`,
+  ]
+
+  for (const artifact of BUNDLE_ARTIFACTS) {
+    lines.push(`artifact.${artifact}.sha256=${await sha256(path.join(outputRoot, artifact))}`)
+  }
+
+  return `${lines.join("\n")}\n`
+}
+
+async function verifyBundleProvenance(outputRoot, quartzRevision, nornRevision) {
+  const provenancePath = path.join(outputRoot, "bundle.provenance")
+  const expected = await bundleProvenance(outputRoot, quartzRevision, nornRevision)
+  const actual = await fs.readFile(provenancePath, "utf8")
+
+  if (actual !== expected) {
+    throw new Error(`Graph SPA provenance or artifact digests are stale: ${provenancePath}`)
+  }
 }
 
 function runProcess(command, args, cwd, extraEnv = {}) {
@@ -135,8 +176,16 @@ async function main() {
   const outputRoot = path.resolve(siteRoot, options.outputDir)
   const graphRoot = path.join(engineRoot, "quartz", "graph-spa")
   const nornRoot = path.resolve(options.nornRoot)
+  const quartzRevision = admitGitWorktree("GameCult-Quartz", engineRoot)
+  const norn = await prepareNorn(nornRoot)
 
-  const nornViewerRoot = await prepareNorn(nornRoot)
+  if (options.verify === "true") {
+    await verifyBundleProvenance(outputRoot, quartzRevision, norn.actualRevision)
+    console.log(`Verified graph SPA provenance at ${path.join(outputRoot, "bundle.provenance")}`)
+    return
+  }
+
+  await buildNorn(norn)
   await linkNodeModules(graphRoot)
   await runProcess(
     process.execPath,
@@ -144,9 +193,12 @@ async function main() {
     graphRoot,
     {
       GAMECULT_GRAPH_SPA_OUT_DIR: outputRoot,
-      GAMECULT_NORN_VIEWER_ROOT: nornViewerRoot,
+      GAMECULT_NORN_VIEWER_ROOT: norn.viewerRoot,
     },
   )
+  const provenance = await bundleProvenance(outputRoot, quartzRevision, norn.actualRevision)
+  await fs.writeFile(path.join(outputRoot, "bundle.provenance"), provenance, "utf8")
+  await verifyBundleProvenance(outputRoot, quartzRevision, norn.actualRevision)
 }
 
 main().catch((error) => {

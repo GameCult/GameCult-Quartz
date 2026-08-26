@@ -52,13 +52,16 @@ the deployed Mimir and gamecult.org sites. New or migrated consumers should pass
 Build the static SPA assets into the consumer repo when its graph payload changes:
 
 ```powershell
-node ..\\GameCult-Quartz\\scripts\\build-graph-spa.mjs --siteRoot E:\\Projects\\Mimir --outputDir static/norn-graph
+node ..\\GameCult-Quartz\\scripts\\build-graph-spa.mjs --siteRoot E:\\Projects\\Mimir
 ```
 
 The SPA source lives in `quartz/graph-spa`. It consumes the admitted build of
 `@gamecult/norn-viewer` from a sibling `Norn` checkout. The builder verifies the
 revision in `quartz/graph-spa/norn-revision.txt`, builds the Norn package, and then
-builds the Quartz adapter. Generated assets remain committed by consumer sites.
+builds the Quartz adapter. It rejects dirty Quartz or Norn sources and writes
+`bundle.provenance` with both revisions and every deployable artifact digest.
+Generated assets remain committed by consumer sites. Pass `--verify` with the same
+site and output arguments to verify a committed bundle without rebuilding it.
 
 GameCult-Quartz owns content-index projection, article loading, hash navigation,
 and the fullscreen shell. Norn owns graph interaction and rendering. Consumer

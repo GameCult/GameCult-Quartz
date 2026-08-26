@@ -109,6 +109,8 @@
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^25.0.10",
     "@types/pretty-time": "^1.1.5",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
     "@types/source-map-support": "^0.5.10",
     "@types/ws": "^8.18.1",
     "@types/yargs": "^17.0.35",

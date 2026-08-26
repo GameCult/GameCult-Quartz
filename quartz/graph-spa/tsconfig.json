@@ -3,13 +3,15 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "react",
-    "types": ["react", "react-dom"]
+    "types": ["react", "react-dom"],
+    "paths": {
+      "@gamecult/norn-viewer": ["../../../Norn/web/norn-viewer/dist/index.d.ts"]
+    }
   },
   "include": [
     "./src/**/*.ts",
     "./src/**/*.tsx",
     "./vite.config.ts",
-    "../../../EpiphanyGraph/web/epiphany-graph-viewer/src/**/*.ts",
-    "../../../EpiphanyGraph/web/epiphany-graph-viewer/src/**/*.tsx"
+    "../../../Norn/web/norn-viewer/dist/index.d.ts"
   ]
 }

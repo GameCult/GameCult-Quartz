@@ -15,17 +15,18 @@ body {
   font-family: "Ubuntu", "Segoe UI", sans-serif;
 }
 
-.gamecult-epiphany-graph-app {
+.gamecult-norn-graph-app {
   box-sizing: border-box;
   width: 100vw;
   min-height: 100vh;
   padding: 0;
 }
 
-.gamecult-epiphany-graph-app * {
+.gamecult-norn-graph-app * {
   box-sizing: border-box;
 }
 
+.gamecult-norn-graph-root,
 .gamecult-epiphany-graph-root {
   position: fixed;
   inset: 0;
@@ -65,7 +66,7 @@ body.gamecult-graph-spa-active {
   height: 100vh;
 }
 
-.gamecult-graph-shell .epiphany-graph-overlay-panel {
+.gamecult-graph-shell .norn-overlay-panel {
   opacity: 0.25;
   transition:
     opacity 160ms ease,
@@ -73,17 +74,17 @@ body.gamecult-graph-spa-active {
     box-shadow 160ms ease;
 }
 
-.gamecult-graph-shell .epiphany-graph-overlay-panel:hover,
-.gamecult-graph-shell .epiphany-graph-overlay-panel:focus-within {
+.gamecult-graph-shell .norn-overlay-panel:hover,
+.gamecult-graph-shell .norn-overlay-panel:focus-within {
   opacity: 1;
   transform: translateY(-1px);
 }
 
-.gamecult-graph-shell aside.epiphany-graph-overlay-panel > section {
+.gamecult-graph-shell aside.norn-overlay-panel > section {
   display: none !important;
 }
 
-.gamecult-graph-shell aside.epiphany-graph-overlay-panel > section:last-child {
+.gamecult-graph-shell aside.norn-overlay-panel > section:last-child {
   display: grid !important;
   grid-row: 1 / -1;
 }
@@ -266,7 +267,7 @@ body.gamecult-graph-spa-active {
 }
 
 @media (max-width: 900px) {
-  .gamecult-graph-shell aside.epiphany-graph-overlay-panel {
+  .gamecult-graph-shell aside.norn-overlay-panel {
     left: 12px;
     right: 12px;
     top: auto !important;

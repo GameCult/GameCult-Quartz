@@ -8,7 +8,6 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.1.1",
-    "elkjs": "^0.11.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "typescript": "^5.9.3",

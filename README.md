@@ -45,15 +45,25 @@ node ..\\GameCult-Quartz\\scripts\\build-site.mjs build --siteRoot E:\\Projects\
 Consumer sites can render the shared graph surface with `Component.GameCultGraphSpaShell(...)`.
 The component only owns the mount point and asset tags; the consumer overlay decides where it appears.
 
+The shell's default `epiphany-graph` asset route and mount class remain a compatibility contract for
+the deployed Mimir and gamecult.org sites. New or migrated consumers should pass the
+`norn-graph` asset paths and `gamecult-norn-graph-root` explicitly.
+
 Build the static SPA assets into the consumer repo when its graph payload changes:
 
 ```powershell
-node ..\\GameCult-Quartz\\scripts\\build-graph-spa.mjs --siteRoot E:\\Projects\\Mimir --outputDir static/epiphany-graph
+node ..\\GameCult-Quartz\\scripts\\build-graph-spa.mjs --siteRoot E:\\Projects\\Mimir --outputDir static/norn-graph
 ```
 
-The SPA source lives in `quartz/graph-spa`. It currently imports the shared `EpiphanyGraphViewer`
-from a sibling `EpiphanyGraph` checkout during local builds, so generated assets should be committed
-by consumer sites until that viewer is packaged as a normal dependency.
+The SPA source lives in `quartz/graph-spa`. It consumes the admitted build of
+`@gamecult/norn-viewer` from a sibling `Norn` checkout. The builder verifies the
+revision in `quartz/graph-spa/norn-revision.txt`, builds the Norn package, and then
+builds the Quartz adapter. Generated assets remain committed by consumer sites.
+
+GameCult-Quartz owns content-index projection, article loading, hash navigation,
+and the fullscreen shell. Norn owns graph interaction and rendering. Consumer
+sites provide taxonomy, filtering, placement, and presentation through
+`GameCultGraphSpaShell` configuration and overlay styles.
 
 ## Shared Interactive Embeds
 

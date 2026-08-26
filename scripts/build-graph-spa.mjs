@@ -1,6 +1,7 @@
 import fs from "node:fs/promises"
 import path from "node:path"
 import { spawn } from "node:child_process"
+import { execFileSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
 
 const engineRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
@@ -9,6 +10,7 @@ function parseArgs(argv) {
   const options = {
     siteRoot: process.cwd(),
     outputDir: "static/epiphany-graph",
+    nornRoot: path.resolve(engineRoot, "..", "Norn"),
   }
 
   for (let i = 0; i < argv.length; i++) {
@@ -51,20 +53,69 @@ async function linkNodeModules(graphRoot) {
   await fs.symlink(source, dest, "junction")
 }
 
-function runBuild(graphRoot, outputRoot) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(
-      process.execPath,
-      ["./node_modules/vite/bin/vite.js", "build", "--base", "./"],
-      {
-        cwd: graphRoot,
-        stdio: "inherit",
-        env: {
-          ...process.env,
-          GAMECULT_GRAPH_SPA_OUT_DIR: outputRoot,
-        },
-      },
+async function prepareNorn(nornRoot) {
+  const viewerRoot = path.join(nornRoot, "web", "norn-viewer")
+  const revisionPath = path.join(engineRoot, "quartz", "graph-spa", "norn-revision.txt")
+  const expectedRevision = (await fs.readFile(revisionPath, "utf8")).trim()
+  const packagePath = path.join(viewerRoot, "package.json")
+  const tsupPath = path.join(viewerRoot, "node_modules", "tsup", "dist", "cli-default.js")
+
+  if (!(await exists(packagePath))) {
+    throw new Error(
+      `Norn was not found at '${nornRoot}'. Clone GameCult/Norn beside GameCult-Quartz or pass --nornRoot.`,
     )
+  }
+
+  const actualRevision = execFileSync("git", ["-C", nornRoot, "rev-parse", "HEAD"], {
+    encoding: "utf8",
+  }).trim()
+  if (actualRevision !== expectedRevision) {
+    throw new Error(`Norn must be revision ${expectedRevision}; found ${actualRevision}.`)
+  }
+
+  const status = execFileSync(
+    "git",
+    ["-C", nornRoot, "status", "--porcelain", "--untracked-files=normal"],
+    { encoding: "utf8" },
+  ).trim()
+  if (status) {
+    throw new Error(`Norn must be clean before GameCult-Quartz consumes it: ${nornRoot}`)
+  }
+
+  if (!(await exists(tsupPath))) {
+    throw new Error(`Norn dependencies are missing. Run npm ci in '${viewerRoot}'.`)
+  }
+
+  await runProcess(
+    process.execPath,
+    [
+      tsupPath,
+      "src/index.ts",
+      "--format",
+      "esm,cjs",
+      "--dts",
+      "--external",
+      "react",
+      "--external",
+      "react-dom",
+      "--clean",
+    ],
+    viewerRoot,
+  )
+
+  return viewerRoot
+}
+
+function runProcess(command, args, cwd, extraEnv = {}) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, {
+      cwd,
+      stdio: "inherit",
+      env: {
+        ...process.env,
+        ...extraEnv,
+      },
+    })
 
     child.on("exit", (code) => {
       if (code === 0) {
@@ -72,7 +123,7 @@ function runBuild(graphRoot, outputRoot) {
         return
       }
 
-      reject(new Error(`Graph SPA build exited with code ${code}`))
+      reject(new Error(`${path.basename(command)} exited with code ${code}`))
     })
     child.on("error", reject)
   })
@@ -83,9 +134,19 @@ async function main() {
   const siteRoot = path.resolve(options.siteRoot)
   const outputRoot = path.resolve(siteRoot, options.outputDir)
   const graphRoot = path.join(engineRoot, "quartz", "graph-spa")
+  const nornRoot = path.resolve(options.nornRoot)
 
+  const nornViewerRoot = await prepareNorn(nornRoot)
   await linkNodeModules(graphRoot)
-  await runBuild(graphRoot, outputRoot)
+  await runProcess(
+    process.execPath,
+    ["./node_modules/vite/bin/vite.js", "build", "--base", "./"],
+    graphRoot,
+    {
+      GAMECULT_GRAPH_SPA_OUT_DIR: outputRoot,
+      GAMECULT_NORN_VIEWER_ROOT: nornViewerRoot,
+    },
+  )
 }
 
 main().catch((error) => {

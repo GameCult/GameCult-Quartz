@@ -6,6 +6,10 @@ import path from "node:path"
 const viewerEntry = fileURLToPath(new URL("./viewer.html", import.meta.url))
 const reactPath = fileURLToPath(new URL("./node_modules/react", import.meta.url))
 const reactDomPath = fileURLToPath(new URL("./node_modules/react-dom", import.meta.url))
+const nornViewerRoot = process.env.GAMECULT_NORN_VIEWER_ROOT
+if (!nornViewerRoot) {
+  throw new Error("GAMECULT_NORN_VIEWER_ROOT is required. Use scripts/build-graph-spa.mjs.")
+}
 const outDir = process.env.GAMECULT_GRAPH_SPA_OUT_DIR
   ? path.resolve(process.env.GAMECULT_GRAPH_SPA_OUT_DIR)
   : fileURLToPath(new URL("./dist", import.meta.url))
@@ -16,6 +20,7 @@ export default defineConfig({
     alias: {
       react: reactPath,
       "react-dom": reactDomPath,
+      "@gamecult/norn-viewer": path.join(nornViewerRoot, "dist", "index.js"),
     },
   },
   server: {
@@ -32,7 +37,6 @@ export default defineConfig({
       output: {
         manualChunks: {
           react: ["react", "react-dom"],
-          elk: ["elkjs/lib/elk.bundled.js"],
         },
         entryFileNames: "assets/[name].js",
         chunkFileNames: "assets/[name].js",

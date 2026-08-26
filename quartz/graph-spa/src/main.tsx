@@ -1,16 +1,16 @@
 import React from "react"
 import { flushSync } from "react-dom"
 import ReactDOM from "react-dom/client"
-import { EpiphanyGraphViewer } from "../../../../EpiphanyGraph/web/epiphany-graph-viewer/src/lib/EpiphanyGraphViewer"
+import { NornViewer } from "@gamecult/norn-viewer"
 import type {
-  EpiphanyGraphEdge,
-  EpiphanyGraphNode,
-  EpiphanyGraphLayoutModeConfig,
-  EpiphanyGraphsState,
+  NornGraphEdge,
+  NornGraphNode,
+  NornGraphLayoutModeConfig,
+  NornGraphsState,
   GraphKey,
   PositionedNode,
   ViewerSelection,
-} from "../../../../EpiphanyGraph/web/epiphany-graph-viewer/src/lib/types"
+} from "@gamecult/norn-viewer"
 import "./styles.css"
 
 type QuartzContentEntry = {
@@ -27,7 +27,8 @@ type QuartzContentIndex = Record<string, QuartzContentEntry>
 type GraphSpaConfig = {
   title?: string
   architectureDescription?: string
-  layoutMode?: EpiphanyGraphLayoutModeConfig
+  layoutMode?: NornGraphLayoutModeConfig
+  sectionOrder?: string[]
   allowedSlugPrefixes?: string[]
   blockedSlugPrefixes?: string[]
   blockedPathSegments?: string[]
@@ -59,7 +60,6 @@ declare global {
   }
 }
 
-const DEFAULT_BLOCKED_SLUG_PREFIXES = ["Inspirations/", "GameCult-Quartz/"]
 const DEFAULT_BLOCKED_PATH_SEGMENTS = [
   "/.git/",
   "/node_modules/",
@@ -94,17 +94,6 @@ class GraphErrorBoundary extends React.Component<React.PropsWithChildren, GraphE
   }
 }
 
-const SECTION_ORDER = [
-  "World",
-  "Ecology",
-  "Species",
-  "Civilizations",
-  "Technologies",
-  "Conflicts",
-  "Themes",
-  "Root",
-]
-
 function entryTitle(slug: string, entry?: QuartzContentEntry) {
   if (entry?.title) {
     return entry.title
@@ -127,7 +116,7 @@ function normalizeSlug(slug: string) {
 
 function graphSpaConfig() {
   const mountedConfig = document.querySelector<HTMLElement>(
-    ".gamecult-epiphany-graph-root[data-graph-config]",
+    ".gamecult-norn-graph-root[data-graph-config], .gamecult-epiphany-graph-root[data-graph-config]",
   )?.dataset.graphConfig
 
   if (mountedConfig) {
@@ -149,7 +138,7 @@ function slugMatchesPrefix(slug: string, prefix: string) {
 
 function isAllowedGraphSlug(slug: string, entry: QuartzContentEntry, config = graphSpaConfig()) {
   const normalizedSlug = normalizeSlug(slug)
-  const blockedPrefixes = [...DEFAULT_BLOCKED_SLUG_PREFIXES, ...(config.blockedSlugPrefixes ?? [])]
+  const blockedPrefixes = config.blockedSlugPrefixes ?? []
 
   if (blockedPrefixes.some((prefix) => slugMatchesPrefix(normalizedSlug, prefix))) {
     return false
@@ -240,13 +229,13 @@ function currentRouteSelection(slugs: Set<string>): ViewerSelection | null {
   }
 }
 
-function compareSections(left: string, right: string) {
-  const leftIndex = SECTION_ORDER.indexOf(left)
-  const rightIndex = SECTION_ORDER.indexOf(right)
+function compareSections(left: string, right: string, sectionOrder: string[]) {
+  const leftIndex = sectionOrder.indexOf(left)
+  const rightIndex = sectionOrder.indexOf(right)
 
   if (leftIndex !== -1 || rightIndex !== -1) {
-    const orderedLeft = leftIndex === -1 ? SECTION_ORDER.length : leftIndex
-    const orderedRight = rightIndex === -1 ? SECTION_ORDER.length : rightIndex
+    const orderedLeft = leftIndex === -1 ? sectionOrder.length : leftIndex
+    const orderedRight = rightIndex === -1 ? sectionOrder.length : rightIndex
 
     return orderedLeft - orderedRight
   }
@@ -324,11 +313,12 @@ function buildSectionEdges(entries: Array<[string, QuartzContentEntry]>, slugs: 
         sourceSection === targetSection
           ? `${count} wiki ${count === 1 ? "link stays" : "links stay"} inside ${sourceSection}.`
           : `${count} wiki ${count === 1 ? "link runs" : "links run"} from ${sourceSection} into ${targetSection}.`,
-    } satisfies EpiphanyGraphEdge
+    } satisfies NornGraphEdge
   })
 }
 
-function buildGraphState(contentIndex: QuartzContentIndex): EpiphanyGraphsState {
+function buildGraphState(contentIndex: QuartzContentIndex): NornGraphsState {
+  const config = graphSpaConfig()
   const entries = Object.entries(contentIndex)
     .map(([slug, entry]) => {
       const normalizedSlug = normalizeSlug(entry.slug || slug)
@@ -342,7 +332,7 @@ function buildGraphState(contentIndex: QuartzContentIndex): EpiphanyGraphsState 
   const slugs = new Set(entries.map(([slug]) => slug))
   const incoming = buildIncomingLinks(entries, slugs)
 
-  const architectureNodes: EpiphanyGraphNode[] = entries.map(([slug, entry]) => {
+  const architectureNodes: NornGraphNode[] = entries.map(([slug, entry]) => {
     const outgoingCount = validLinkedSlugs(entry, slugs).length
     const backlinkCount = incoming.get(slug)?.length ?? 0
 
@@ -356,7 +346,7 @@ function buildGraphState(contentIndex: QuartzContentIndex): EpiphanyGraphsState 
     }
   })
 
-  const architectureEdges: EpiphanyGraphEdge[] = entries.flatMap(([sourceSlug, entry]) =>
+  const architectureEdges: NornGraphEdge[] = entries.flatMap(([sourceSlug, entry]) =>
     validLinkedSlugs(entry, slugs).map((targetSlug, index) => ({
       id: `${sourceSlug}->${targetSlug}:${index}`,
       source_id: sourceSlug,
@@ -367,10 +357,10 @@ function buildGraphState(contentIndex: QuartzContentIndex): EpiphanyGraphsState 
     })),
   )
 
-  const sections = Array.from(new Set(entries.map(([slug]) => sectionForSlug(slug)))).sort(
-    compareSections,
+  const sections = Array.from(new Set(entries.map(([slug]) => sectionForSlug(slug))).values()).sort(
+    (left, right) => compareSections(left, right, config.sectionOrder ?? []),
   )
-  const dataflowNodes: EpiphanyGraphNode[] = sections.map((section) => {
+  const dataflowNodes: NornGraphNode[] = sections.map((section) => {
     const sectionEntries = entries.filter(([slug]) => sectionForSlug(slug) === section)
     const sectionSlugs = new Set(sectionEntries.map(([slug]) => slug))
     const outgoingCrossSection = sectionEntries.reduce((count, [, entry]) => {
@@ -470,7 +460,7 @@ function selectedNoteSlug(selection: ViewerSelection | null) {
 }
 
 function App() {
-  const [graphState, setGraphState] = React.useState<EpiphanyGraphsState | null>(null)
+  const [graphState, setGraphState] = React.useState<NornGraphsState | null>(null)
   const [contentIndex, setContentIndex] = React.useState<QuartzContentIndex | null>(null)
   const [selection, setSelection] = React.useState<ViewerSelection | null>(null)
   const [viewportTarget, setViewportTarget] = React.useState<ViewerSelection | null>(null)
@@ -635,16 +625,16 @@ function App() {
 
   if (!graphState) {
     return (
-      <main className="gamecult-epiphany-graph-app">
+      <main className="gamecult-norn-graph-app">
         <div className="gamecult-graph-loading">Loading Quartz backlink graph...</div>
       </main>
     )
   }
 
   return (
-    <main className="gamecult-epiphany-graph-app">
+    <main className="gamecult-norn-graph-app">
       <GraphErrorBoundary>
-        <EpiphanyGraphViewer
+        <NornViewer
           state={graphState}
           title={graphSpaConfig().title ?? "GameCult Knowledge Graph"}
           selection={selection}
@@ -829,7 +819,6 @@ function ArticlePanel({
       {articleState.status === "ready" && (
         <div
           className="gamecult-spa-article"
-          data-epiphany-article-content
           onClick={onArticleLinkClick}
           dangerouslySetInnerHTML={{ __html: articleState.html }}
         />
@@ -837,7 +826,6 @@ function ArticlePanel({
       {articleState.status !== "ready" && articleState.html && (
         <div
           className="gamecult-spa-article"
-          data-epiphany-article-content
           onClick={onArticleLinkClick}
           dangerouslySetInnerHTML={{ __html: articleState.html }}
         />
@@ -863,25 +851,27 @@ function initialsForTitle(title: string) {
 }
 
 function mountGameCultGraph() {
-  document.querySelectorAll(".gamecult-epiphany-graph-root").forEach((element) => {
-    if (!(element instanceof HTMLElement)) {
-      return
-    }
+  document
+    .querySelectorAll(".gamecult-norn-graph-root, .gamecult-epiphany-graph-root")
+    .forEach((element) => {
+      if (!(element instanceof HTMLElement)) {
+        return
+      }
 
-    if (element.dataset.ready === "true" && element.childElementCount > 0) {
-      return
-    }
+      if (element.dataset.ready === "true" && element.childElementCount > 0) {
+        return
+      }
 
-    const root = ReactDOM.createRoot(element)
-    flushSync(() => {
-      root.render(
-        <React.StrictMode>
-          <App />
-        </React.StrictMode>,
-      )
+      const root = ReactDOM.createRoot(element)
+      flushSync(() => {
+        root.render(
+          <React.StrictMode>
+            <App />
+          </React.StrictMode>,
+        )
+      })
+      element.dataset.ready = "true"
     })
-    element.dataset.ready = "true"
-  })
 }
 
 function scheduleGameCultGraphMount() {

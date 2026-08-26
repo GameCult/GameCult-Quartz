@@ -7,13 +7,19 @@ export type GameCultGraphSpaShellOptions = {
   config?: {
     title?: string
     architectureDescription?: string
-    layoutMode?: "layered" | "stress" | "force" | "combined-force" | {
-      architecture?: "layered" | "stress" | "force" | "combined-force"
-      dataflow?: "layered" | "stress" | "force" | "combined-force"
-    }
+    layoutMode?:
+      | "layered"
+      | "stress"
+      | "force"
+      | "combined-force"
+      | {
+          architecture?: "layered" | "stress" | "force" | "combined-force"
+          dataflow?: "layered" | "stress" | "force" | "combined-force"
+        }
     allowedSlugPrefixes?: string[]
     blockedSlugPrefixes?: string[]
     blockedPathSegments?: string[]
+    sectionOrder?: string[]
   }
 }
 

@@ -12,6 +12,12 @@ Shared Quartz engine, reusable GitHub Pages workflow, and the minimum amount of 
 
 Site-specific content, mastheads, sidebars, render hooks, and custom chrome stay in the consumer repos as overlays.
 
+## Status And Entry Points
+
+- **Entry points:** `scripts/build-site.mjs` (stage a site repo against this engine), `scripts/build-graph-spa.mjs` (build the shared graph SPA into a consumer), `quartz/graph-spa` (the SPA source) and `.github/workflows/quartz-pages.yml` (the reusable Pages workflow).
+- **Live:** the engine and workflow serve `gamecult-site` and `AetheriaLore`; the graph SPA serves the deployed Mimir and gamecult.org sites under its default `epiphany-graph` asset route.
+- **Migrating:** that default route is a compatibility contract. New or migrated consumers pass the `norn-graph` asset paths and `gamecult-norn-graph-root` explicitly. Future sprite staging extends Sai rather than adding a site-local player.
+
 ## Consumer Repo Shape
 
 Each site repo is expected to provide:
@@ -37,7 +43,7 @@ npm ci
 Then from a consumer repo, use its launcher script, or call the shared builder directly:
 
 ```powershell
-node ..\\GameCult-Quartz\\scripts\\build-site.mjs build --siteRoot E:\\Projects\\gamecult-site --contentDir GameCult --overlayDir site --outputDir quartz-site/public
+node ..\\GameCult-Quartz\\scripts\\build-site.mjs build --siteRoot . --contentDir GameCult --overlayDir site --outputDir quartz-site/public
 ```
 
 ## Fullscreen Graph SPA
@@ -52,7 +58,7 @@ the deployed Mimir and gamecult.org sites. New or migrated consumers should pass
 Build the static SPA assets into the consumer repo when its graph payload changes:
 
 ```powershell
-node ..\\GameCult-Quartz\\scripts\\build-graph-spa.mjs --siteRoot E:\\Projects\\Mimir
+node ..\\GameCult-Quartz\\scripts\\build-graph-spa.mjs --siteRoot ..\\Mimir
 ```
 
 The SPA source lives in `quartz/graph-spa`. It consumes the admitted build of

@@ -11,7 +11,7 @@ jobs:
   build-and-test:
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [docker]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4

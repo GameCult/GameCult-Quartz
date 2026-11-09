@@ -33,7 +33,11 @@ jobs:
           repository: GameCult/GameCult-Quartz
           path: GameCult-Quartz
 
+      # Pages actions exist only on GitHub: the forge runner resolves actions
+      # from data.forgejo.org, which has no actions/configure-pages, so the job
+      # failed there. Build always; touch Pages only on the GitHub mirror.
       - name: Configure Pages
+        if: github.server_url == 'https://github.com'
         uses: actions/configure-pages@v5
 
       - name: Setup Node
@@ -56,11 +60,13 @@ jobs:
           --outputDir "${{ inputs.output-dir }}"
 
       - name: Upload Pages artifact
+        if: github.server_url == 'https://github.com'
         uses: actions/upload-pages-artifact@v3
         with:
           path: ${{ inputs.output-dir }}
 
   deploy:
+    if: github.server_url == 'https://github.com'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

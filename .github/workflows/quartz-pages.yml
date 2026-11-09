@@ -1,0 +1,72 @@
+name: Shared Quartz Pages Build
+
+on:
+  workflow_call:
+    inputs:
+      content-dir:
+        required: true
+        type: string
+      overlay-dir:
+        required: false
+        type: string
+        default: site
+      output-dir:
+        required: false
+        type: string
+        default: quartz-site/public
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout site repository
+        uses: actions/checkout@v4
+
+      - name: Checkout shared Quartz engine
+        uses: actions/checkout@v4
+        with:
+          repository: GameCult/GameCult-Quartz
+          path: GameCult-Quartz
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: GameCult-Quartz/package-lock.json
+
+      - name: Install shared engine dependencies
+        working-directory: GameCult-Quartz
+        run: npm ci
+
+      - name: Build site through shared Quartz
+        run: >
+          node GameCult-Quartz/scripts/build-site.mjs build
+          --siteRoot "$GITHUB_WORKSPACE"
+          --contentDir "${{ inputs.content-dir }}"
+          --overlayDir "${{ inputs.overlay-dir }}"
+          --outputDir "${{ inputs.output-dir }}"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ inputs.output-dir }}
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -12,7 +12,8 @@ import { Options as TypstOptions } from "@myriaddreamin/rehype-typst"
 interface Options {
   renderEngine: "katex" | "mathjax" | "typst"
   customMacros: MacroType
-  katexOptions: Omit<KatexOptions, "macros" | "output">
+  // `output` defaults to "html"; "htmlAndMathml" adds MathML for screen readers (KaTeX hides it visually).
+  katexOptions: Omit<KatexOptions, "macros">
   mathJaxOptions: Omit<MathjaxOptions, "macros">
   typstOptions: TypstOptions
 }
